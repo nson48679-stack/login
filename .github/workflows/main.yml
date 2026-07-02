@@ -1,0 +1,44 @@
+name: Build DarkCheatKeyGate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build dylib
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install ldid xz
+
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
+          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          make clean
+          make
+
+      - name: Collect dylib
+        run: |
+          mkdir -p build-artifacts
+          find .theos -name "DarkCheatKeyGate.dylib" -print -exec cp {} build-artifacts/ \;
+          test -f build-artifacts/DarkCheatKeyGate.dylib
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: DarkCheatKeyGate-dylib
+          path: build-artifacts/DarkCheatKeyGate.dylib
